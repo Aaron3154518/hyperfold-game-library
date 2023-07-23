@@ -9,12 +9,14 @@ use hyperfold_engine::{
     framework::{
         physics::Position,
         render_system::{
-            render_data::RenderAsset, AssetManager, Elevation, RenderComponent, Renderer,
+            render_data::{RenderAsset, RenderDataBuilderTrait, RenderDataTrait},
+            AssetManager, Elevation, RenderComponent, Renderer,
         },
     },
     utils::{
         rect::{Align, PointF, Rect},
         timer::{Timer, TimerTrait},
+        util::AsType,
     },
 };
 
@@ -43,12 +45,12 @@ pub fn new_fruit_effect(
         FruitEffect { fruit, img },
         Timer::new(2000),
         Elevation(Elevations::FruitEffect as u8),
-        RenderComponent::new(RenderAsset::from_file(&fruit_effect_image(img), r, am)),
+        RenderComponent::new(RenderAsset::from_file(&fruit_effect_image(img), r, am).with_alpha(0)),
         Position(Rect::from(
             pos.x,
             pos.y,
-            25.0,
-            25.0,
+            35.0,
+            35.0,
             Align::Center,
             Align::Center
         ))
@@ -60,6 +62,7 @@ components!(
     effect: &'a mut FruitEffect,
     timer: &'a mut Timer,
     pos: &'a Position,
+    tex: &'a mut RenderComponent
 );
 
 #[hyperfold_engine::system]
@@ -76,26 +79,36 @@ fn update_fruit_effects(
         effect,
         timer,
         pos,
+        tex,
     } in effects
     {
         let prev_over = timer.time_left() > 200;
         if timer.add_time(update.0) > 0 {
             trash.0.push(*eid);
-        } else if prev_over && timer.time_left() <= 200 {
-            new_fruit_effect(
-                (effect.img + 1) % 3,
-                effect.fruit,
-                pos.0.center(),
-                entities,
-                r,
-                am,
-            );
+        } else {
+            tex.try_mut(|tex: &mut RenderAsset| {
+                tex.set_alpha(
+                    (timer.time_passed().min(timer.time_left()).min(400) * 255 / 400) as u8,
+                )
+            });
+            if prev_over && timer.time_left() <= 200 {
+                new_fruit_effect(
+                    (effect.img + 1) % 3,
+                    effect.fruit,
+                    pos.0.center(),
+                    entities,
+                    r,
+                    am,
+                );
+            }
         }
     }
 }
 
+components!(FruitEffectFruits, effect: &'a FruitEffect);
+
 #[hyperfold_engine::system]
-fn on_remove_fruit(fruit: &EatFruit, effects: Vec<FruitEffects>, trash: &mut EntityTrash) {
+fn on_remove_fruit(fruit: &EatFruit, effects: Vec<FruitEffectFruits>, trash: &mut EntityTrash) {
     trash.0.extend(
         effects
             .into_iter()

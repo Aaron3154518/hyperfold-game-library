@@ -8,7 +8,8 @@ use hyperfold_engine::{
     framework::{
         physics::Position,
         render_system::{
-            render_data::RenderAsset, AssetManager, Camera, Elevation, RenderComponent, Renderer,
+            render_data::{RenderAsset, RenderDataBuilderTrait},
+            AssetManager, Camera, Elevation, RenderComponent, Renderer,
         },
     },
     utils::{
