@@ -1,0 +1,18 @@
+[package]
+name = "hyperfold-games-library"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+
+[dependencies.snake]
+path = "./snake"
+version = "0.1.0"
+dependency = ""
+
+[dependencies.hyperfold_engine]
+path = "./hyperfold-engine"
+version = "0.1.0"
+dependency = ""
