@@ -135,6 +135,7 @@ dependencies = [
  "num-derive",
  "num-traits",
  "parser",
+ "rand",
  "shared",
  "uuid",
 ]

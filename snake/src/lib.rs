@@ -13,13 +13,16 @@ use hyperfold_engine::{
     },
     utils::{
         colors::gray,
-        rect::{Align, Rect},
+        rect::{Align, Point, PointF, Rect},
+        util::FloatMath,
     },
 };
 
 use crate::elevations::Elevations;
 
 pub mod elevations;
+pub mod fruit;
+pub mod fruit_effect;
 pub mod snake;
 
 hyperfold_engine::game_crate!();
@@ -29,6 +32,20 @@ pub const N_SQUARES: u32 = 10;
 
 pub const W_I: u32 = SQUARE_W * N_SQUARES;
 pub const W_F: f32 = W_I as f32;
+
+pub fn pos_to_square(pos: PointF, camera: &Camera) -> Point {
+    Point {
+        x: (pos.x - camera.0.cx() + W_F / 2.0).round_i32() / SQUARE_W as i32,
+        y: (pos.y - camera.0.cy() + W_F / 2.0).round_i32() / SQUARE_W as i32,
+    }
+}
+
+pub fn square_to_pos(pos: Point, camera: &Camera) -> PointF {
+    PointF {
+        x: SQUARE_W as f32 * (pos.x as f32 + 0.5) + camera.0.cx() - W_F / 2.0,
+        y: SQUARE_W as f32 * (pos.y as f32 + 0.5) + camera.0.cy() - W_F / 2.0,
+    }
+}
 
 #[hyperfold_engine::event]
 struct StartSnake;

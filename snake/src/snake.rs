@@ -17,14 +17,25 @@ use hyperfold_engine::{
     },
 };
 
-use crate::{StartSnake, _engine::AddComponent, elevations::Elevations, W_F};
+use crate::{
+    StartSnake,
+    _engine::{AddComponent, AddEvent},
+    elevations::Elevations,
+    fruit::SpawnFruit,
+    W_F,
+};
 
 #[hyperfold_engine::component(Singleton)]
 struct Snake;
 
 #[hyperfold_engine::system]
-fn new_snake(_: &StartSnake, entities: &mut dyn AddComponent, r: &Renderer, am: &mut AssetManager) {
-    eprintln!("Make SNEK");
+fn new_snake(
+    _: &StartSnake,
+    entities: &mut dyn AddComponent,
+    events: &mut dyn AddEvent,
+    r: &Renderer,
+    am: &mut AssetManager,
+) {
     let e = Entity::new();
     let anim = Animation::new(8, 150);
     add_components!(
@@ -51,10 +62,14 @@ fn new_snake(_: &StartSnake, entities: &mut dyn AddComponent, r: &Renderer, am: 
         Speed(100.0),
         anim
     );
+
+    events.new_event(SpawnFruit);
 }
 
 #[hyperfold_engine::component]
 struct Speed(f32);
+
+components!(labels(Snake), SnakePos, pos: &'a Position);
 
 components!(
     labels(Snake),
