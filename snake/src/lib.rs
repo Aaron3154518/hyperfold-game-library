@@ -24,6 +24,7 @@ pub mod elevations;
 pub mod fruit;
 pub mod fruit_effect;
 pub mod snake;
+pub mod snake_body;
 
 hyperfold_engine::game_crate!();
 
