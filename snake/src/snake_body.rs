@@ -111,7 +111,10 @@ components!(
 );
 
 #[hyperfold_engine::system]
-fn update_snake_bodies(_: &Update, bodies: Vec<SnakeBodies>, snake: SnakePivotsMut) {
+fn update_snake_bodies(_: &Update, mut bodies: Vec<SnakeBodies>, snake: SnakePivotsMut) {
+    // Sort to avoid processing tail before other segments
+    bodies.sort_unstable_by_key(|body| body.body.snake_idx);
+
     for SnakeBodies {
         body,
         pos,
@@ -120,7 +123,6 @@ fn update_snake_bodies(_: &Update, bodies: Vec<SnakeBodies>, snake: SnakePivotsM
         ..
     } in bodies
     {
-        // TODO: crash when hitting edge
         // Invalid pivot is not any error, could mean waiting for the next pivot or no pivots
         if let Some((piv_pos, piv_dir)) = snake
             .pivots
