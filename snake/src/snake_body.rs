@@ -29,7 +29,6 @@ pub const SNAKE_HB_W: f32 = 20.0;
 
 #[hyperfold_engine::component]
 struct SnakeBody {
-    pub hit_box: HitBox,
     pub direction: Direction,
     pub snake_idx: usize,
     pub pivot_idx: usize,
@@ -71,7 +70,6 @@ fn new_snake_body(
         entities,
         e,
         SnakeBody {
-            hit_box: HitBox(Rect::from_center(pos.x, pos.y, SNAKE_HB_W, SNAKE_HB_W)),
             direction,
             snake_idx: snake.pivots.body_count,
             pivot_idx: snake.pivots.pivot_offset
@@ -87,6 +85,7 @@ fn new_snake_body(
                 }))
                 .with_rotation(direction.rotation(90.0), None)
         ),
+        HitBox(Rect::from_center(pos.x, pos.y, SNAKE_HB_W, SNAKE_HB_W)),
         Position(Rect::from_center(pos.x, pos.y, SNAKE_W, SNAKE_W,)),
         PhysicsData {
             v: direction.velocity(snake.speed.0),

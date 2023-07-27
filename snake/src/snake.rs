@@ -23,7 +23,6 @@ use hyperfold_engine::{
 };
 
 use crate::{
-    StartSnake,
     _engine::{AddComponent, AddEvent},
     elevations::Elevations,
     fruit::SpawnFruit,
@@ -68,9 +67,15 @@ struct Snake {
     pub pivots: VecDeque<(PointF, Direction)>,
 }
 
+#[hyperfold_engine::event]
+struct SpawnSnake;
+
+components!(labels(SnakeBodyAnim), SnakeBodyAnimId);
+
 #[hyperfold_engine::system]
 fn new_snake(
-    _: &StartSnake,
+    _: &SpawnSnake,
+    body_anim: Vec<SnakeBodyAnimId>,
     entities: &mut dyn AddComponent,
     events: &mut dyn AddEvent,
     r: &Renderer,
@@ -90,14 +95,8 @@ fn new_snake(
         RenderComponent::new(
             RenderAsset::from_file("res/snake/snake_ss.png", r, am).with_animation(anim)
         ),
-        Position(Rect::from(
-            0.0,
-            0.0,
-            SNAKE_W,
-            SNAKE_W,
-            Align::Center,
-            Align::Center
-        )),
+        HitBox(Rect::from_center(0.0, 0.0, SNAKE_HB_W, SNAKE_HB_W)),
+        Position(Rect::from_center(0.0, 0.0, SNAKE_W, SNAKE_W,)),
         PhysicsData {
             v: PointF::new(),
             a: PointF::new(),
@@ -108,15 +107,17 @@ fn new_snake(
     );
 
     // Snake body animator
-    let e = Entity::new();
-    add_components!(
-        entities,
-        e,
-        SnakeBodyAnim {
-            timer: Timer::new(150),
-            frame: 0,
-        }
-    );
+    if body_anim.is_empty() {
+        let e = Entity::new();
+        add_components!(
+            entities,
+            e,
+            SnakeBodyAnim {
+                timer: Timer::new(150),
+                frame: 0,
+            }
+        );
+    }
 
     events.new_event(SpawnFruit);
 }
@@ -128,7 +129,7 @@ components!(
     labels(Snake),
     SnakePos,
     pos: &'a Position,
-    hit_box: &'a HitBox
+    hit_box: &'a HitBox,
 );
 
 components!(SnakePivots, pivots: &'a Snake, speed: &'a Speed);
@@ -160,12 +161,6 @@ fn move_snake(key: &Key, snake: SnakePhysics, entities: &mut dyn AddComponent) {
             entities.add_component(
                 *snake.eid,
                 SnakeBody {
-                    hit_box: HitBox(Rect::from_center(
-                        snake.pos.0.cx(),
-                        snake.pos.0.cy(),
-                        SNAKE_HB_W,
-                        SNAKE_HB_W,
-                    )),
                     direction,
                     snake_idx: snake.snake.body_count,
                     pivot_idx: (snake.snake.pivot_offset + snake.snake.pivots.len()).max(1) - 1,
@@ -194,9 +189,6 @@ fn collide_snake(
         .find(|body| body.eid != snake.eid && body.hit_box.0.intersects(&snake.hit_box.0))
         .is_some()
     {
-        trash
-            .0
-            .extend(bodies.into_iter().map(|b| b.eid).collect::<Vec<_>>());
         events.new_event(GameOver);
     }
 }
@@ -206,4 +198,13 @@ fn collide_wall(collide: &BoundaryCollision, snake: SnakePos, events: &mut dyn A
     if collide.0 == *snake.eid {
         events.new_event(GameOver);
     }
+}
+
+#[hyperfold_engine::system]
+fn delete_snake(_: &GameOver, bodies: Vec<SnakeBodyPos>, trash: &mut EntityTrash) {
+    // TODO: Simplify getting eids (pass object directly)
+    // TODO: Remove .0 from wrapper
+    trash
+        .0
+        .extend(bodies.into_iter().map(|b| b.eid).collect::<Vec<_>>());
 }

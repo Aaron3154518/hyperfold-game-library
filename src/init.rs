@@ -4,7 +4,7 @@ use crate::_engine::AddEvent;
 
 #[hyperfold_engine::system(Init)]
 fn init(events: &mut dyn AddEvent) {
-    events.new_event(snake::StartSnake);
+    events.new_event(snake::StartGame);
 }
 
 #[hyperfold_engine::event]
