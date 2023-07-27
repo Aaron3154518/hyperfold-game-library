@@ -64,7 +64,7 @@ struct StartGame;
 #[hyperfold_engine::component(Singleton)]
 struct Background;
 
-// TODO: Simplift
+// TODO: Simplify getting ids
 components!(labels(Snake), SnakeId);
 
 components!(labels(Fruit), FruitIds);

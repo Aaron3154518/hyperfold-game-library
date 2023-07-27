@@ -57,7 +57,6 @@ fn new_snake_body(
         None => (PointF::new(), Direction::Up),
     };
 
-    // TODO: spawn at edge
     match direction {
         Direction::Left => pos.x += SNAKE_W,
         Direction::Right => pos.x -= SNAKE_W,
@@ -90,7 +89,7 @@ fn new_snake_body(
         PhysicsData {
             v: direction.velocity(snake.speed.0),
             a: PointF::new(),
-            boundary: Some(Rect::from(0.0, 0.0, W_F, W_F, Align::Center, Align::Center))
+            boundary: None
         },
     );
 
