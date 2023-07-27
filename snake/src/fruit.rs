@@ -91,7 +91,7 @@ fn collide_fruit(
     events: &mut dyn AddEvent,
 ) {
     for fruit in fruits {
-        if fruit.pos.0.intersects(&snake.pos.0) {
+        if fruit.pos.0.intersects(&snake.hit_box.0) {
             trash.0.push(*fruit.eid);
             events.new_event(EatFruit(*fruit.eid));
             events.new_event(SpawnFruit);

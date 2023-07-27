@@ -4,4 +4,5 @@ pub enum Elevations {
     Fruit,
     FruitEffect,
     Snake,
+    Overlay,
 }

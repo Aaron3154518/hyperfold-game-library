@@ -3,7 +3,7 @@ use hyperfold_engine::{
     add_components, components,
     ecs::{entities::NewEntity, events::core::Update},
     framework::{
-        physics::{PhysicsData, Position},
+        physics::{HitBox, PhysicsData, Position},
         render_system::{
             render_data::{RenderAsset, RenderDataBuilderTrait, RenderDataTrait},
             AssetManager, Elevation, RenderComponent, Renderer,
@@ -25,9 +25,11 @@ use crate::{
 };
 
 pub const SNAKE_W: f32 = 50.0;
+pub const SNAKE_HB_W: f32 = 20.0;
 
 #[hyperfold_engine::component]
 struct SnakeBody {
+    pub hit_box: HitBox,
     pub direction: Direction,
     pub snake_idx: usize,
     pub pivot_idx: usize,
@@ -69,6 +71,7 @@ fn new_snake_body(
         entities,
         e,
         SnakeBody {
+            hit_box: HitBox(Rect::from_center(pos.x, pos.y, SNAKE_HB_W, SNAKE_HB_W)),
             direction,
             snake_idx: snake.pivots.body_count,
             pivot_idx: snake.pivots.pivot_offset
@@ -84,14 +87,7 @@ fn new_snake_body(
                 }))
                 .with_rotation(direction.rotation(90.0), None)
         ),
-        Position(Rect::from(
-            pos.x,
-            pos.y,
-            SNAKE_W,
-            SNAKE_W,
-            Align::Center,
-            Align::Center
-        )),
+        Position(Rect::from_center(pos.x, pos.y, SNAKE_W, SNAKE_W,)),
         PhysicsData {
             v: direction.velocity(snake.speed.0),
             a: PointF::new(),
@@ -101,6 +97,8 @@ fn new_snake_body(
 
     snake.pivots.body_count += 1;
 }
+
+components!(SnakeBodyPos, pos: &'a Position, hit_box: &'a HitBox);
 
 components!(
     SnakeBodies,

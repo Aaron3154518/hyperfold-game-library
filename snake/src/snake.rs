@@ -3,10 +3,13 @@ use std::collections::VecDeque;
 use hyperfold_engine::{
     _engine::Entity,
     add_components, components,
-    ecs::entities::NewEntity,
+    ecs::{
+        entities::{EntityTrash, NewEntity},
+        events::core::Update,
+    },
     framework::{
         event_system::events::Key,
-        physics::{PhysicsData, Position},
+        physics::{BoundaryCollision, HitBox, PhysicsData, Position},
         render_system::{
             render_data::{Animation, RenderAsset, RenderDataBuilderTrait},
             AssetManager, Elevation, RenderComponent, Renderer,
@@ -24,8 +27,8 @@ use crate::{
     _engine::{AddComponent, AddEvent},
     elevations::Elevations,
     fruit::SpawnFruit,
-    snake_body::{SnakeBody, SnakeBodyAnim, SNAKE_W},
-    W_F,
+    snake_body::{SnakeBody, SnakeBodyAnim, SnakeBodyPos, SNAKE_HB_W, SNAKE_W},
+    GameOver, W_F,
 };
 
 #[derive(Copy, Clone)]
@@ -121,7 +124,12 @@ fn new_snake(
 #[hyperfold_engine::component]
 struct Speed(pub f32);
 
-components!(labels(Snake), SnakePos, pos: &'a Position);
+components!(
+    labels(Snake),
+    SnakePos,
+    pos: &'a Position,
+    hit_box: &'a HitBox
+);
 
 components!(SnakePivots, pivots: &'a Snake, speed: &'a Speed);
 components!(SnakePivotsMut, pivots: &'a mut Snake, speed: &'a Speed);
@@ -152,6 +160,12 @@ fn move_snake(key: &Key, snake: SnakePhysics, entities: &mut dyn AddComponent) {
             entities.add_component(
                 *snake.eid,
                 SnakeBody {
+                    hit_box: HitBox(Rect::from_center(
+                        snake.pos.0.cx(),
+                        snake.pos.0.cy(),
+                        SNAKE_HB_W,
+                        SNAKE_HB_W,
+                    )),
                     direction,
                     snake_idx: snake.snake.body_count,
                     pivot_idx: (snake.snake.pivot_offset + snake.snake.pivots.len()).max(1) - 1,
@@ -164,5 +178,32 @@ fn move_snake(key: &Key, snake: SnakePhysics, entities: &mut dyn AddComponent) {
             .snake
             .pivots
             .push_back((snake.pos.0.center(), direction));
+    }
+}
+
+#[hyperfold_engine::system]
+fn collide_snake(
+    _: &Update,
+    snake: SnakePos,
+    bodies: Vec<SnakeBodyPos>,
+    trash: &mut EntityTrash,
+    events: &mut dyn AddEvent,
+) {
+    if bodies
+        .iter()
+        .find(|body| body.eid != snake.eid && body.hit_box.0.intersects(&snake.hit_box.0))
+        .is_some()
+    {
+        trash
+            .0
+            .extend(bodies.into_iter().map(|b| b.eid).collect::<Vec<_>>());
+        events.new_event(GameOver);
+    }
+}
+
+#[hyperfold_engine::system]
+fn collide_wall(collide: &BoundaryCollision, snake: SnakePos, events: &mut dyn AddEvent) {
+    if collide.0 == *snake.eid {
+        events.new_event(GameOver);
     }
 }
