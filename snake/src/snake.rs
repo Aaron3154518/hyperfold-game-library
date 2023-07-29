@@ -27,7 +27,7 @@ use crate::{
     elevations::Elevations,
     fruit::SpawnFruit,
     snake_body::{SnakeBody, SnakeBodyAnim, SnakeBodyPos, SNAKE_HB_W, SNAKE_W},
-    GameOver, W_F,
+    GameOver, Playing, W_F,
 };
 
 #[derive(Copy, Clone)]
@@ -189,19 +189,21 @@ fn collide_snake(
         .find(|body| body.eid != snake.eid && body.hit_box.0.intersects(&snake.hit_box.0))
         .is_some()
     {
-        events.new_event(GameOver);
+        events.new_event(Playing::OnExit);
+        events.new_event(GameOver::OnEnter);
     }
 }
 
 #[hyperfold_engine::system]
 fn collide_wall(collide: &BoundaryCollision, snake: SnakePos, events: &mut dyn AddEvent) {
     if collide.0 == *snake.eid {
-        events.new_event(GameOver);
+        events.new_event(Playing::OnExit);
+        events.new_event(GameOver::OnEnter);
     }
 }
 
 #[hyperfold_engine::system]
-fn delete_snake(_: &GameOver, bodies: Vec<SnakeBodyPos>, trash: &mut EntityTrash) {
+fn delete_snake(_: &Playing::OnExit, bodies: Vec<SnakeBodyPos>, trash: &mut EntityTrash) {
     // TODO: Simplify getting eids (pass object directly)
     // TODO: Remove .0 from wrapper
     trash

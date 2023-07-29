@@ -58,8 +58,13 @@ pub fn square_to_pos(pos: Point, camera: &Camera) -> PointF {
     }
 }
 
-#[hyperfold_engine::event]
-struct StartGame;
+#[hyperfold_engine::state]
+struct Playing {
+    dat_a: u8,
+}
+
+#[hyperfold_engine::state]
+struct GameOver;
 
 #[hyperfold_engine::component(Singleton)]
 struct Background;
@@ -74,7 +79,7 @@ components!(labels(Background), BackgroundId);
 
 #[hyperfold_engine::system]
 fn start_snake(
-    _: &StartGame,
+    _: &Playing::OnEnter,
     // TODO: Simplify Option<Singleton>
     snake: Vec<SnakeId>,
     fruits: Vec<FruitIds>,
@@ -130,9 +135,6 @@ fn start_snake(
     events.new_event(SpawnSnake);
 }
 
-#[hyperfold_engine::event]
-struct GameOver;
-
 #[hyperfold_engine::component(Singleton)]
 struct GameOverScreen;
 
@@ -143,7 +145,7 @@ components!(labels(GameOverScreen || GameOverText), GameOverEids);
 
 #[hyperfold_engine::system]
 fn game_over(
-    _: &GameOver,
+    _: &GameOver::OnEnter,
     game_over: Vec<GameOverEids>,
     entities: &mut dyn _engine::AddComponent,
     r: &Renderer,
@@ -217,6 +219,7 @@ fn game_over(
 #[hyperfold_engine::system]
 fn restart(key: &Key, game_over: Vec<GameOverEids>, events: &mut dyn _engine::AddEvent) {
     if !game_over.is_empty() && matches!(key.0.key, SDL_KeyCode::SDLK_r) {
-        events.new_event(StartGame);
+        events.new_event(GameOver::OnExit);
+        events.new_event(Playing::OnEnter);
     }
 }
