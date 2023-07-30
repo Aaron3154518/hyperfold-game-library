@@ -17,11 +17,11 @@ use hyperfold_engine::{
 };
 
 use crate::{
-    _engine::AddComponent,
+    _engine::Components,
     elevations::Elevations,
     fruit::EatFruit,
     snake::{Direction, Snake, SnakePivotsMut},
-    W_F,
+    Playing,
 };
 
 pub const SNAKE_W: f32 = 50.0;
@@ -45,7 +45,7 @@ fn new_snake_body(
     _: &EatFruit,
     bodies: Vec<SnakeBodies>,
     snake: SnakePivotsMut,
-    entities: &mut dyn AddComponent,
+    entities: &mut dyn Components,
     r: &Renderer,
     am: &mut AssetManager,
 ) {
@@ -68,6 +68,7 @@ fn new_snake_body(
     add_components!(
         entities,
         e,
+        Playing::Label,
         SnakeBody {
             direction,
             snake_idx: snake.pivots.body_count,

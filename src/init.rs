@@ -1,10 +1,10 @@
 use hyperfold_engine::{components, ecs::entities::EntityTrash};
 
-use crate::_engine::AddEvent;
+use crate::_engine::Events;
 
 #[hyperfold_engine::system(Init)]
-fn init(events: &mut dyn AddEvent) {
-    events.new_event(snake::Playing::OnEnter);
+fn init(events: &mut dyn Events) {
+    events.set_state(snake::Playing::Data);
 }
 
 #[hyperfold_engine::event]

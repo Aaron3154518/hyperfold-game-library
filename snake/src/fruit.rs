@@ -18,12 +18,12 @@ use hyperfold_engine::{
 };
 
 use crate::{
-    _engine::{AddComponent, AddEvent},
+    _engine::{Components, Events},
     elevations::Elevations,
     fruit_effect::new_fruit_effect,
     pos_to_square,
     snake::SnakePos,
-    square_to_pos, N_SQUARES,
+    square_to_pos, Playing, N_SQUARES,
 };
 
 #[hyperfold_engine::component]
@@ -39,7 +39,7 @@ struct SpawnFruit;
 pub fn new_fruit(
     _: &SpawnFruit,
     snake: SnakePos,
-    entities: &mut dyn AddComponent,
+    entities: &mut dyn Components,
     r: &Renderer,
     am: &mut AssetManager,
     camera: &Camera,
@@ -63,6 +63,7 @@ pub fn new_fruit(
         entities,
         fruit,
         Fruit,
+        Playing::Label,
         Elevation(Elevations::Fruit as u8),
         RenderComponent::new(RenderAsset::from_file("res/snake/fruit.png", r, am)),
         Position(Rect::from(
@@ -88,7 +89,7 @@ fn collide_fruit(
     fruits: Vec<FruitPos>,
     snake: SnakePos,
     trash: &mut EntityTrash,
-    events: &mut dyn AddEvent,
+    events: &mut dyn Events,
 ) {
     for fruit in fruits {
         if fruit.pos.0.intersects(&snake.hit_box.0) {

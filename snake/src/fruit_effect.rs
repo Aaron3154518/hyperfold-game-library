@@ -1,4 +1,4 @@
-use crate::{_engine::AddComponent, elevations::Elevations, fruit::EatFruit};
+use crate::{_engine::Components, elevations::Elevations, fruit::EatFruit, Playing};
 use hyperfold_engine::{
     _engine::Entity,
     add_components, components,
@@ -34,7 +34,7 @@ pub fn new_fruit_effect(
     img: u8,
     fruit: Entity,
     pos: PointF,
-    entities: &mut dyn AddComponent,
+    entities: &mut dyn Components,
     r: &Renderer,
     am: &mut AssetManager,
 ) {
@@ -43,6 +43,7 @@ pub fn new_fruit_effect(
         entities,
         e,
         FruitEffect { fruit, img },
+        Playing::Label,
         Timer::new(2000),
         Elevation(Elevations::FruitEffect as u8),
         RenderComponent::new(RenderAsset::from_file(&fruit_effect_image(img), r, am).with_alpha(0)),
@@ -70,7 +71,7 @@ fn update_fruit_effects(
     update: &Update,
     effects: Vec<FruitEffects>,
     trash: &mut EntityTrash,
-    entities: &mut dyn AddComponent,
+    entities: &mut dyn Components,
     r: &Renderer,
     am: &mut AssetManager,
 ) {

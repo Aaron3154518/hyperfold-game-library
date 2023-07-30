@@ -1,11 +1,7 @@
-use std::ptr::addr_of_mut;
-
-use fruit::Fruit;
-use fruit_effect::FruitEffect;
 use hyperfold_engine::{
     _engine::Entity,
     add_components, components,
-    ecs::entities::{EntityTrash, NewEntity},
+    ecs::entities::NewEntity,
     framework::{
         event_system::events::Key,
         physics::Position,
@@ -25,7 +21,6 @@ use hyperfold_engine::{
         util::FloatMath,
     },
 };
-use snake::{Snake, SpawnSnake};
 
 use crate::elevations::Elevations;
 
@@ -59,9 +54,7 @@ pub fn square_to_pos(pos: Point, camera: &Camera) -> PointF {
 }
 
 #[hyperfold_engine::state]
-struct Playing {
-    dat_a: u8,
-}
+struct Playing;
 
 #[hyperfold_engine::state]
 struct GameOver;
@@ -69,157 +62,105 @@ struct GameOver;
 #[hyperfold_engine::component(Singleton)]
 struct Background;
 
-// TODO: Simplify getting ids
-components!(labels(Snake), SnakeId);
-
-components!(labels(Fruit), FruitIds);
-components!(labels(FruitEffect), FruitEffectIds);
-
-components!(labels(Background), BackgroundId);
-
-#[hyperfold_engine::system]
-fn start_snake(
-    _: &Playing::OnEnter,
-    // TODO: Simplify Option<Singleton>
-    snake: Vec<SnakeId>,
-    fruits: Vec<FruitIds>,
-    fruit_effects: Vec<FruitEffectIds>,
-    game_over: Vec<GameOverEids>,
-    bkgrnd: Vec<BackgroundId>,
-    trash: &mut EntityTrash,
-    entities: &mut dyn _engine::AddComponent,
-    events: &mut dyn _engine::AddEvent,
-    camera: &mut Camera,
-    r: &Renderer,
-) {
-    // TODO: Simplify replace entities
-    // Clear entities
-    if let Some(snake) = snake.first() {
-        trash.0.push(*snake.eid);
-    }
-    trash.0.extend(fruits.into_iter().map(|f| f.eid));
-    trash.0.extend(fruit_effects.into_iter().map(|f| f.eid));
-    if let Some(game_over) = game_over.first() {
-        trash.0.push(*game_over.eid);
-    }
-
-    camera.0.set_pos(0.0, 0.0, Align::Center, Align::Center);
-
-    // Background grid
-    if bkgrnd.is_empty() {
-        let tex = Texture::new(r, W_I, W_I, gray(100));
-        let w = SQUARE_W as f32;
-        for x in (0..N_SQUARES).map(|x| x as f32 * w) {
-            for y in (0..N_SQUARES).map(|y| y as f32 * w) {
-                tex.draw(
-                    r,
-                    &mut Rectangle::new().set_color(gray(200)).border(
-                        Rect { x, y, w, h: w },
-                        -2.0,
-                        false,
-                    ),
-                );
-            }
+#[hyperfold_engine::system(Init)]
+fn create_bkgrnd(entities: &mut dyn _engine::Components, r: &Renderer) {
+    let tex = Texture::new(r, W_I, W_I, gray(100));
+    let w = SQUARE_W as f32;
+    for x in (0..N_SQUARES).map(|x| x as f32 * w) {
+        for y in (0..N_SQUARES).map(|y| y as f32 * w) {
+            tex.draw(
+                r,
+                &mut Rectangle::new().set_color(gray(200)).border(
+                    Rect { x, y, w, h: w },
+                    -2.0,
+                    false,
+                ),
+            );
         }
-        let e = Entity::new();
-        add_components!(
-            entities,
-            e,
-            Background,
-            Elevation(Elevations::Background as u8),
-            RenderComponent::new(RenderTexture::new(Some(tex))),
-            Position(Rect::from(0.0, 0.0, W_F, W_F, Align::Center, Align::Center))
-        );
     }
-
-    events.new_event(SpawnSnake);
+    let e = Entity::new();
+    add_components!(
+        entities,
+        e,
+        Background,
+        Elevation(Elevations::Background as u8),
+        RenderComponent::new(RenderTexture::new(Some(tex))),
+        Position(Rect::from(0.0, 0.0, W_F, W_F, Align::Center, Align::Center))
+    );
 }
+
+// TODO:
+// Take Option<Singleton>
+// insert_if_none and insert_or_replace
+// Attach systems to crate
 
 #[hyperfold_engine::component(Singleton)]
 struct GameOverScreen;
 
-#[hyperfold_engine::component(Singleton)]
-struct GameOverText;
-
-components!(labels(GameOverScreen || GameOverText), GameOverEids);
+components!(labels(GameOverScreen), GameOverEids);
 
 #[hyperfold_engine::system]
 fn game_over(
     _: &GameOver::OnEnter,
-    game_over: Vec<GameOverEids>,
-    entities: &mut dyn _engine::AddComponent,
+    entities: &mut dyn _engine::Components,
     r: &Renderer,
     am: &mut AssetManager,
 ) {
-    // TODO: Simplify create if not exist
-    if game_over.is_empty() {
-        let tex = Texture::new(
-            r,
-            W_I,
-            W_I,
-            SDL_Color {
-                r: 0,
-                g: 0,
-                b: 0,
-                a: 64,
-            },
-        );
+    let tex = Texture::new(
+        r,
+        W_I,
+        W_I,
+        SDL_Color {
+            r: 0,
+            g: 0,
+            b: 0,
+            a: 64,
+        },
+    );
 
-        // Game over text
-        let rect = Rect::from_center(HALF_W, HALF_W, 0.0, 0.0);
-        let mut font = FontData {
-            w: Some(W_I / 3),
-            h: None,
-            sample: "Game Over!".to_string(),
-            file: TIMES.to_string(),
-        };
-        let mut rt = RenderText::new(font.clone())
-            .with_text("Game Over!")
-            .with_text_color(WHITE)
-            .with_dest_align(Align::Center, Align::BotRight)
-            .with_dest_fit(Fit::None)
-            .with_dest_rect(rect);
-        rt.render_text(rect, r, am);
-        tex.draw(r, &mut rt);
+    // Game over text
+    let rect = Rect::from_center(HALF_W, HALF_W, 0.0, 0.0);
+    let mut font = FontData {
+        w: Some(W_I / 3),
+        h: None,
+        sample: "Game Over!".to_string(),
+        file: TIMES.to_string(),
+    };
+    let mut rt = RenderText::new(font.clone())
+        .with_text("Game Over!")
+        .with_text_color(WHITE)
+        .with_dest_align(Align::Center, Align::BotRight)
+        .with_dest_fit(Fit::None)
+        .with_dest_rect(rect);
+    rt.render_text(rect, r, am);
+    tex.draw(r, &mut rt);
 
-        // Press 'r' text
-        font.w = Some(W_I / 2);
-        font.sample = "Press 'r' to restart".to_string();
-        let mut rt = rt
-            .with_font_data(font)
-            .with_text("Press 'r' to restart")
-            .with_dest_align(Align::Center, Align::TopLeft);
-        rt.render_text(rect, r, am);
-        tex.draw(r, &mut rt);
+    // Press 'r' text
+    font.w = Some(W_I / 2);
+    font.sample = "Press 'r' to restart".to_string();
+    let mut rt = rt
+        .with_font_data(font)
+        .with_text("Press 'r' to restart")
+        .with_dest_align(Align::Center, Align::TopLeft);
+    rt.render_text(rect, r, am);
+    tex.draw(r, &mut rt);
 
-        let e = Entity::new();
-        add_components!(
-            entities,
-            e,
-            GameOverScreen,
-            Elevation(Elevations::GameOverScreen as u8),
-            RenderComponent::new(RenderTexture::new(Some(tex))),
-            Position(Rect::from_center(0.0, 0.0, W_F, W_F))
-        );
-
-        // let e = Entity::new();
-        // add_components!(
-        //     entities,
-        //     e,
-        //     GameOverText,
-        //     Elevation(Elevations::GameOverText as u8),
-        //     RenderComponent::new(),
-        //     Position(Rect::from_center(0.0, 0.0, 0.0, 0.0)),
-        // );
-    }
+    let e = Entity::new();
+    add_components!(
+        entities,
+        e,
+        GameOverScreen,
+        GameOver::Label,
+        Elevation(Elevations::GameOverScreen as u8),
+        RenderComponent::new(RenderTexture::new(Some(tex))),
+        Position(Rect::from_center(0.0, 0.0, W_F, W_F))
+    );
 }
 
-// TODO: Simplify checking game state, singleton exist, counts of components
-// TODO: Game state machine?
+// TODO: Attach systems to state
 #[hyperfold_engine::system]
-fn restart(key: &Key, game_over: Vec<GameOverEids>, events: &mut dyn _engine::AddEvent) {
+fn restart(key: &Key, game_over: Vec<GameOverEids>, events: &mut dyn _engine::Events) {
     if !game_over.is_empty() && matches!(key.0.key, SDL_KeyCode::SDLK_r) {
-        events.new_event(GameOver::OnExit);
-        events.new_event(Playing::OnEnter);
+        events.set_state(Playing::Data);
     }
 }

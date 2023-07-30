@@ -3,16 +3,13 @@ use std::collections::VecDeque;
 use hyperfold_engine::{
     _engine::Entity,
     add_components, components,
-    ecs::{
-        entities::{EntityTrash, NewEntity},
-        events::core::Update,
-    },
+    ecs::{entities::NewEntity, events::core::Update},
     framework::{
         event_system::events::Key,
         physics::{BoundaryCollision, HitBox, PhysicsData, Position},
         render_system::{
             render_data::{Animation, RenderAsset, RenderDataBuilderTrait},
-            AssetManager, Elevation, RenderComponent, Renderer,
+            AssetManager, Camera, Elevation, RenderComponent, Renderer,
         },
     },
     sdl2::SDL_KeyCode,
@@ -23,7 +20,7 @@ use hyperfold_engine::{
 };
 
 use crate::{
-    _engine::{AddComponent, AddEvent},
+    _engine::{Components, Events},
     elevations::Elevations,
     fruit::SpawnFruit,
     snake_body::{SnakeBody, SnakeBodyAnim, SnakeBodyPos, SNAKE_HB_W, SNAKE_W},
@@ -67,25 +64,23 @@ struct Snake {
     pub pivots: VecDeque<(PointF, Direction)>,
 }
 
-#[hyperfold_engine::event]
-struct SpawnSnake;
-
-components!(labels(SnakeBodyAnim), SnakeBodyAnimId);
-
 #[hyperfold_engine::system]
 fn new_snake(
-    _: &SpawnSnake,
-    body_anim: Vec<SnakeBodyAnimId>,
-    entities: &mut dyn AddComponent,
-    events: &mut dyn AddEvent,
+    _: &Playing::OnEnter,
+    entities: &mut dyn Components,
+    events: &mut dyn Events,
     r: &Renderer,
     am: &mut AssetManager,
+    camera: &mut Camera,
 ) {
+    camera.0.set_pos(0.0, 0.0, Align::Center, Align::Center);
+
     let e = Entity::new();
     let anim = Animation::new(8, 150);
     add_components!(
         entities,
         e,
+        Playing::Label,
         Snake {
             body_count: 0,
             pivot_offset: 0,
@@ -107,17 +102,16 @@ fn new_snake(
     );
 
     // Snake body animator
-    if body_anim.is_empty() {
-        let e = Entity::new();
-        add_components!(
-            entities,
-            e,
-            SnakeBodyAnim {
-                timer: Timer::new(150),
-                frame: 0,
-            }
-        );
-    }
+    let e = Entity::new();
+    add_components!(
+        entities,
+        e,
+        Playing::Label,
+        SnakeBodyAnim {
+            timer: Timer::new(150),
+            frame: 0,
+        }
+    );
 
     events.new_event(SpawnFruit);
 }
@@ -146,7 +140,7 @@ components!(
 );
 
 #[hyperfold_engine::system]
-fn move_snake(key: &Key, snake: SnakePhysics, entities: &mut dyn AddComponent) {
+fn move_snake(key: &Key, snake: SnakePhysics, entities: &mut dyn Components) {
     if key.0.pressed() {
         let direction = match key.0.key {
             SDL_KeyCode::SDLK_a => Direction::Left,
@@ -177,36 +171,19 @@ fn move_snake(key: &Key, snake: SnakePhysics, entities: &mut dyn AddComponent) {
 }
 
 #[hyperfold_engine::system]
-fn collide_snake(
-    _: &Update,
-    snake: SnakePos,
-    bodies: Vec<SnakeBodyPos>,
-    trash: &mut EntityTrash,
-    events: &mut dyn AddEvent,
-) {
+fn collide_snake(_: &Update, snake: SnakePos, bodies: Vec<SnakeBodyPos>, events: &mut dyn Events) {
     if bodies
         .iter()
         .find(|body| body.eid != snake.eid && body.hit_box.0.intersects(&snake.hit_box.0))
         .is_some()
     {
-        events.new_event(Playing::OnExit);
-        events.new_event(GameOver::OnEnter);
+        events.set_state(GameOver::Data);
     }
 }
 
 #[hyperfold_engine::system]
-fn collide_wall(collide: &BoundaryCollision, snake: SnakePos, events: &mut dyn AddEvent) {
+fn collide_wall(collide: &BoundaryCollision, snake: SnakePos, events: &mut dyn Events) {
     if collide.0 == *snake.eid {
-        events.new_event(Playing::OnExit);
-        events.new_event(GameOver::OnEnter);
+        events.set_state(GameOver::Data);
     }
-}
-
-#[hyperfold_engine::system]
-fn delete_snake(_: &Playing::OnExit, bodies: Vec<SnakeBodyPos>, trash: &mut EntityTrash) {
-    // TODO: Simplify getting eids (pass object directly)
-    // TODO: Remove .0 from wrapper
-    trash
-        .0
-        .extend(bodies.into_iter().map(|b| b.eid).collect::<Vec<_>>());
 }
