@@ -29,6 +29,7 @@ pub mod fruit;
 pub mod fruit_effect;
 pub mod snake;
 pub mod snake_body;
+pub mod snake_death;
 
 hyperfold_engine::game_crate!();
 

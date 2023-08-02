@@ -87,7 +87,7 @@ fn update_fruit_effects(
         if timer.add_time(update.0) > 0 {
             trash.0.push(*eid);
         } else {
-            tex.try_mut(|tex: &mut RenderAsset| {
+            tex.try_as_mut(|tex: &mut RenderAsset| {
                 tex.set_alpha(
                     (timer.time_passed().min(timer.time_left()).min(400) * 255 / 400) as u8,
                 )

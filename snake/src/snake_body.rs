@@ -149,7 +149,7 @@ fn update_snake_bodies(_: &Update, mut bodies: Vec<SnakeBodies>, snake: SnakePiv
                 };
 
                 physics.v = piv_dir.velocity(snake.speed.0);
-                tex.try_mut(|tex: &mut RenderAsset| {
+                tex.try_as_mut(|tex: &mut RenderAsset| {
                     tex.set_rotation(piv_dir.rotation(90.0), None);
                 });
 
@@ -187,6 +187,6 @@ fn animate_snake_bodies(
     };
     for body in bodies {
         body.tex
-            .try_mut(|tex: &mut RenderAsset| tex.set_area(Some(rect)));
+            .try_as_mut(|tex: &mut RenderAsset| tex.set_area(Some(rect)));
     }
 }
