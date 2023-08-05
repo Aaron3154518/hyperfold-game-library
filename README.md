@@ -14,7 +14,7 @@ Copy dlls into `./`
 `main.rs`:
 ```
 #![feature(trait_upcasting)]
-#![feature(drain_filter)]
+#![feature(extract_if)]
 
 hyperfold_engine::game_crate!();
 

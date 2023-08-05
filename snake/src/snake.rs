@@ -91,7 +91,7 @@ fn new_snake(
             RenderAsset::from_file("res/snake/snake_ss.png", r, am).with_animation(anim)
         ),
         HitBox(Rect::from_center(0.0, 0.0, SNAKE_HB_W, SNAKE_HB_W)),
-        Position(Rect::from_center(0.0, 0.0, SNAKE_W, SNAKE_W,)),
+        Position(Rect::from_center(0.0, 0.0, SNAKE_W, SNAKE_W)),
         PhysicsData {
             v: PointF::new(),
             a: PointF::new(),

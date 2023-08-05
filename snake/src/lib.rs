@@ -31,6 +31,8 @@ pub mod snake;
 pub mod snake_body;
 pub mod snake_death;
 
+use hyperfold_engine::system_macro;
+
 hyperfold_engine::game_crate!();
 
 pub const SQUARE_W: u32 = 50;
@@ -89,11 +91,6 @@ fn create_bkgrnd(entities: &mut dyn _engine::Components, r: &Renderer) {
         Position(Rect::from(0.0, 0.0, W_F, W_F, Align::Center, Align::Center))
     );
 }
-
-// TODO:
-// Take Option<Singleton>
-// insert_if_none and insert_or_replace
-// Attach systems to crate
 
 #[hyperfold_engine::component(Singleton)]
 struct GameOverScreen;
@@ -159,7 +156,9 @@ fn game_over(
 }
 
 // TODO: Attach systems to state
-#[hyperfold_engine::system]
+#[hyperfold_engine::system {
+    
+}]
 fn restart(key: &Key, game_over: Vec<GameOverEids>, events: &mut dyn _engine::Events) {
     if !game_over.is_empty() && matches!(key.0.key, SDL_KeyCode::SDLK_r) {
         events.set_state(Playing::Data);
