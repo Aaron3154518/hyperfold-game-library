@@ -9,6 +9,10 @@ echo "nightly" > rust-toolchain
 
 Copy sdl into `./hyperfold-engine`
 
+https://github.com/libsdl-org/SDL/releases  
+https://github.com/libsdl-org/SDL_ttf/releases  
+https://github.com/libsdl-org/SDL_image/releases
+
 Copy dlls into `./`
 
 `main.rs`:
